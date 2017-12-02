@@ -182,7 +182,8 @@
           results.created = response.query.created;
           app.updateForecastCard(results);
         }
-      } else {
+      }
+	  else {
         // Return the initial weather forecast since no data is available.
         app.updateForecastCard(initialWeatherForecast);
       }
@@ -320,11 +321,16 @@
 			app.getForecast(city.key, city.label);
 		});
 		}
-	else{
-		app.updateForecastCard(initialWeatherForecast);
-		app.selectedCities = [
-			{key: initialWeatherForecast.key, label: initialWeatherForecast.label}
-		];
-		}
+	// else{
+		// app.updateForecastCard(initialWeatherForecast);
+		// app.selectedCities = [
+			// {key: initialWeatherForecast.key, label: initialWeatherForecast.label}
+		// ];
+		// }
   // TODO add service worker code here
+  if('serviceWorker' in navigator){
+	navigator.serviceWorker
+			  .register('./service-worker.js')
+			  .then(function(){console.log('service worker registered');});
+  }
 })();

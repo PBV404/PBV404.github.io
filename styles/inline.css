@@ -108,8 +108,8 @@ body {
     border: none;
     outline: none;
     cursor: pointer; }
-  .header #butRefresh {
-    background: url(/images/ic_refresh_white_24px.svg) center center no-repeat; }
+    .header #butScanDevice {
+        background: url(/images/ic_refresh_white_24px.svg) center center no-repeat;}
   .header #butAdd {
     background: url(/images/ic_add_white_24px.svg) center center no-repeat; }
 

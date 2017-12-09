@@ -4,12 +4,9 @@
 
   var app = {
     isLoading: true,
-    visibleCards: {},
+	ledCharacteristic: undefined,
     spinner: document.querySelector('.loader'),
-    cardTemplate: document.querySelector('.cardTemplate'),
     container: document.querySelector('.main'),
-    addDialog: document.querySelector('.dialog-container'),
-    
   };
 
 
@@ -22,12 +19,10 @@
   document.getElementById('butScanDevice').addEventListener('click', function () {
       app.scanDevice();
   });
-    
-  document.getElementById('butAddCancel').addEventListener('click', function() {
-    // Close the add new city dialog
-    app.toggleAddDialog(false);
+  
+  document.getElementById('butSendValue').addEventListener('click', function () {
+      app.sendValue();
   });
-
 
   /*****************************************************************************
    *
@@ -35,14 +30,6 @@
    *
    ****************************************************************************/
 
-  // Toggles the visibility of the add new city dialog.
-  app.toggleAddDialog = function(visible) {
-    if (visible) {
-      app.addDialog.classList.add('dialog-container--visible');
-    } else {
-      app.addDialog.classList.remove('dialog-container--visible');
-    }
-  };
 
 /*****************************************************************************
    *
@@ -53,13 +40,49 @@
       console.log('scan devices');
       navigator.bluetooth.requestDevice({
           filters: [{
-              services: ['19B10001- E8F2 - 537E-4F6C- D104768A1214']
-          }]
+          //   services: ['19b10001-e8f2-537e-4f6c-d104768a1214'],
+              name: 'LED'
+              
+          }],
+          optionalServices: ['19b10001-e8f2-537e-4f6c-d104768a1214']
+          
       })
-          .then(device => { console.log('connected !'); })
+          .then(device => {
+              console.log(device.name);
+              return device.gatt.connect();
+          })
+          .then(server => {
+              console.log("Connected, getting services");
+              console.log(server);
+              return server.getPrimaryServices('19b10001-e8f2-537e-4f6c-d104768a1214');
+          })
+          .then(services => {
+              let queue = Promise.resolve();
+              services.forEach(service => {
+                  queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
+                      console.log('> Service: ' + service.uuid);
+                      characteristics.forEach(characteristic => {
+                          console.log('>> Characteristic: ' + characteristic.uuid + ' ' + getSupportedProperties(characteristic));
+						  console.log('> Notify : '+ characteristic.notify);		
+						  console.log('> Indicate: '+ characteristic.indicate);		
+							   characteristic.readValue().then(value => {console.log('read characteristic value = '+value.getUint8(0));});
+                      });
+                  }));
+              });
+          })
           .catch(error => { console.log(error); });
   };
 
+
+  function getSupportedProperties(characteristic) {
+      let supportedProperties = [];
+      for (const p in characteristic.properties) {
+          if (characteristic.properties[p] === true) {
+              supportedProperties.push(p.toUpperCase());
+          }
+      }
+      return '[' + supportedProperties.join(', ') + ']';
+  }
 
     //on init:
   app.scanDevice();

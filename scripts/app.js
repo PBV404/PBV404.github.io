@@ -4,6 +4,7 @@
 
   var app = {
     isLoading: true,
+	lastValue: false,
 	ledCharacteristic: undefined,
     spinner: document.querySelector('.loader'),
     container: document.querySelector('.main'),
@@ -54,25 +55,33 @@
           .then(server => {
               console.log("Connected, getting services");
               console.log(server);
-              return server.getPrimaryServices('19b10001-e8f2-537e-4f6c-d104768a1214');
+              return server.getPrimaryService('19b10001-e8f2-537e-4f6c-d104768a1214');
           })
-          .then(services => {
-              let queue = Promise.resolve();
-              services.forEach(service => {
-                  queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
-                      console.log('> Service: ' + service.uuid);
-                      characteristics.forEach(characteristic => {
-                          console.log('>> Characteristic: ' + characteristic.uuid + ' ' + getSupportedProperties(characteristic));
-						  console.log('> Notify : '+ characteristic.notify);		
-						  console.log('> Indicate: '+ characteristic.indicate);		
-							   characteristic.readValue().then(value => {console.log('read characteristic value = '+value.getUint8(0));});
-                      });
-                  }));
-              });
+          .then(service => {
+              console.log('getting characteristic');
+			  return service.getCharacteristic('19b10001-e8f2-537e-4f6c-120476801214');
           })
+		  .then(characteristic => app.parseCharacteristic(characteristic))
           .catch(error => { console.log(error); });
   };
 
+  app.parseCharacteristic = function(characteristic){
+	console.log('> characteristic uuid = '+ characteristic.uuid + getSupportedProperties(characteristic));
+	this.ledCharacteristic = characteristic;
+  }
+  
+  app.sendValue= function(){
+	let resetEnergyExpended;
+	if(this.lastValue){
+		resetEnergyExpended= Uint8Array.of(1);
+	}
+	else{
+		resetEnergyExpended= Uint8Array.of(0);
+	}
+	this.lastValue = !this.lastValue;
+	
+    this.ledCharacteristic.writeValue(resetEnergyExpended).then(_ =>{console.log('value sent');});
+  }
 
   function getSupportedProperties(characteristic) {
       let supportedProperties = [];
